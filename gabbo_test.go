@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -86,7 +87,13 @@ func TestWhenGetStatusCodeThenTeapotShouldBeReturned(t *testing.T) {
 }
 
 func TestWhenGetIterableAndSampleIsEnabledThenARandomSliceIteratorShouldBeReturned(t *testing.T) {
-	arguments := Arguments{sample: true, sampleSize: 10, inputFile: os.Stdin}
+	content := []byte("temporary\nfile's content")
+	tmpFile, _ := ioutil.TempFile("", "example")
+	defer os.Remove(tmpFile.Name()) // clean up
+	tmpFile.Write(content)
+	tmpFile.Seek(0, io.SeekStart)
+
+	arguments := Arguments{sample: true, sampleSize: 10, inputFile: tmpFile}
 	i := getIterable(&arguments)
 	if !isInstanceOf(i, (*RandomSliceIterator)(nil)) {
 		t.Fail()

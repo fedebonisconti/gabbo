@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"runtime"
 	"testing"
@@ -38,4 +39,13 @@ func TestGetCLArgumentsThenDefaultArgumentsShouldBeReturned(t *testing.T) {
 	if !v {
 		t.Fail()
 	}
+}
+
+func TestErrorIsNotNilThenPanicShouldBeThrown(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fail()
+		}
+	}()
+	checkError(errors.New("test error"))
 }
