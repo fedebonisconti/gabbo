@@ -110,15 +110,15 @@ func processResponses(responsesChannel <-chan *Response, responsesWg *sync.WaitG
 			min = _t
 		}
 	}
-	successfulls := 0
-	redirections := 0
+	success := 0
+	redirects := 0
 	clientErrors := 0
 	serverErrors := 0
 	for _, s := range statuses {
 		if s >= 200 && s <= 299 {
-			successfulls++
+			success++
 		} else if s >= 300 && s <= 399 {
-			redirections++
+			redirects++
 		} else if s >= 400 && s <= 499 {
 			clientErrors++
 		} else if s >= 500 && s <= 599 {
@@ -134,8 +134,8 @@ func processResponses(responsesChannel <-chan *Response, responsesWg *sync.WaitG
 	fmt.Println(fmt.Sprintf("\tAverage time between requests %d ms", sumElapsed/int64(len(timesElapsed))))
 	fmt.Println(fmt.Sprintf("\tMaximum response time %d ms", max))
 	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "Status","Count"))
-	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "2xx", successfulls))
-	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "3xx", redirections))
+	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "2xx", success))
+	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "3xx", redirects))
 	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "4xx", clientErrors))
 	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "5xx", serverErrors))
 	fmt.Println("")
