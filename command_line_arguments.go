@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-
 type Header struct {
 	Name  string
 	Value string
@@ -22,6 +21,7 @@ type Arguments struct {
 	inputFile         *os.File
 	outputFile        *os.File
 	headers           []Header
+	method            string
 }
 
 func GetCommandLineArguments() *Arguments {
@@ -50,13 +50,20 @@ func parseArguments() (*string, *string, *Arguments) {
 	sample := flag.Bool("sample-mode", false, "Takes random samples from input to send requests (default false)")
 	sampleSize := flag.Int("sample-size", 0, "Sample size. If zero, sample is disabled")
 	headers := flag.String("headers", "", "Comma separated headers without (example: \"Auth-Token:123,Accept:text/html,Content-Type:application/json\")")
+	method := flag.String("method", "GET", "Http method to be used in every request.")
 	flag.Parse()
+	m := strings.ToUpper(*method)
+	if m != "GET" && m != "POST" && m != "PUT" && m != "PATCH" && m != "DELETE" {
+		flag.Usage()
+		os.Exit(1)
+	}
 	arguments := Arguments{
 		parallelismFactor: *parallelismFactor,
 		timeBetweenBatch:  *timeBetweenBatch,
 		sample:            *sample && (*sampleSize != 0),
 		sampleSize:        *sampleSize,
 		headers:           parseHeaders(*headers),
+		method:            m,
 	}
 	return inputFileName, outputFileName, &arguments
 }

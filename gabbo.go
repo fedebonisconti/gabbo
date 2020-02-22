@@ -43,7 +43,7 @@ func (g Gabbo) run() {
 	iterable := getIterable(arguments)
 	for iterable.HasNext() {
 		requestsWg.Add(1)
-		go doRequest("GET", strings.TrimSpace(iterable.Next()), arguments.headers, responsesChannel, &requestsWg)
+		go doRequest(arguments.method, strings.TrimSpace(iterable.Next()), arguments.headers, responsesChannel, &requestsWg)
 		sent++
 		if sent%arguments.parallelismFactor == 0 {
 			requestsWg.Wait()
