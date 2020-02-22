@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -20,7 +21,7 @@ type Response struct {
 }
 
 func main() {
-	arguments := GetArguments()
+	arguments := GetCommandLineArguments()
 	defer func() {
 		checkError(arguments.inputFile.Close())
 		checkError(arguments.outputFile.Close())
@@ -39,7 +40,7 @@ func main() {
 	iterable := getIterable(arguments)
 	for iterable.HasNext() {
 		requestsWg.Add(1)
-		go doRequest("GET", iterable.Next(), arguments.headers, responsesChannel, &requestsWg)
+		go doRequest("GET", strings.TrimSpace(iterable.Next()), arguments.headers, responsesChannel, &requestsWg)
 		sent++
 		if sent%arguments.parallelismFactor == 0 {
 			requestsWg.Wait()
@@ -128,7 +129,7 @@ func processResponses(responsesChannel <-chan *Response, responsesWg *sync.WaitG
 		fmt.Println("Couldn't print statistics")
 		return
 	}
-	fmt.Println("\n")
+	fmt.Println("")
 	fmt.Println(fmt.Sprintf("\tMinimum response time %d ms", min))
 	fmt.Println(fmt.Sprintf("\tAverage time between requests %d ms", sumElapsed/int64(len(timesElapsed))))
 	fmt.Println(fmt.Sprintf("\tMaximum response time %d ms", max))
@@ -137,7 +138,7 @@ func processResponses(responsesChannel <-chan *Response, responsesWg *sync.WaitG
 	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "3xx", redirections))
 	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "4xx", clientErrors))
 	fmt.Println(fmt.Sprintf("\t%-10v|%10v", "5xx", serverErrors))
-	fmt.Println("\n")
+	fmt.Println("")
 }
 
 func writeFile(content string, outputFile *os.File) {

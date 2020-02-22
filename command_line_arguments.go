@@ -8,18 +8,6 @@ import (
 	"strings"
 )
 
-const (
-	STDIN  string = "stdin"
-	STDOUT string = "stdout"
-)
-
-type Parameters struct {
-	inputFile         *os.File
-	outputFile        *os.File
-	parallelismFactor int
-	timeBetweenBatch  int
-	sample            bool
-}
 
 type Header struct {
 	Name  string
@@ -36,22 +24,17 @@ type Arguments struct {
 	headers           []Header
 }
 
-func (p *Parameters) Close() {
-	checkError(p.inputFile.Close())
-	checkError(p.outputFile.Close())
-}
-
-func GetArguments() *Arguments {
+func GetCommandLineArguments() *Arguments {
 	inputFileName, outputFileName, arguments := parseArguments()
 
 	var err error
 	arguments.inputFile = os.Stdin
-	if *inputFileName != "" && *inputFileName != STDIN {
+	if *inputFileName != "" {
 		arguments.inputFile, err = os.Open(*inputFileName)
 		checkError(err)
 	}
 	arguments.outputFile = os.Stdout
-	if *outputFileName != "" && *outputFileName != STDOUT {
+	if *outputFileName != "" {
 		arguments.outputFile, err = os.Create(*outputFileName)
 		checkError(err)
 	}
@@ -60,12 +43,12 @@ func GetArguments() *Arguments {
 }
 
 func parseArguments() (*string, *string, *Arguments) {
-	inputFileName := flag.String("input", STDIN, "InputFile")
+	inputFileName := flag.String("input", "", "Input file path (default stdin)")
 	parallelismFactor := flag.Int("parallel", runtime.NumCPU(), "Parallelism factor")
-	outputFileName := flag.String("output", STDOUT, "Output inputFile name")
-	timeBetweenBatch := flag.Int("wait", 0, "Time between batches in millis")
-	sample := flag.Bool("sample", false, "Takes random samples from input to send requests")
-	sampleSize := flag.Int("sample-size", 0, "Sample size (if zero, sample is disabled)")
+	outputFileName := flag.String("output", "", "Output file path (default stdout)")
+	timeBetweenBatch := flag.Int("wait", 0, "Time between batch of parallel requests in millis")
+	sample := flag.Bool("sample-mode", false, "Takes random samples from input to send requests (default false)")
+	sampleSize := flag.Int("sample-size", 0, "Sample size. If zero, sample is disabled")
 	headers := flag.String("headers", "", "Comma separated headers without (example: \"Auth-Token:123,Accept:text/html,Content-Type:application/json\")")
 	flag.Parse()
 	arguments := Arguments{

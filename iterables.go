@@ -27,7 +27,7 @@ type RandomSliceIterator struct {
 }
 
 func (r RandomSliceIterator) HasNext() bool {
-	return true
+	return len(r.slice) > 0
 }
 
 func (r RandomSliceIterator) Next() string {

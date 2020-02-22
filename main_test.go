@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestName(t *testing.T) {
+func TestRequestIsDoneThenItShouldBeInTheChannel(t *testing.T) {
 	// Start a local HTTP server
 	requestCount := 0
 	endpoint := "/some/path"
@@ -38,14 +38,11 @@ func TestName(t *testing.T) {
 	}
 }
 
-func TestXXXThenYYY(t *testing.T) {
+func TestWhenTwoArePushedInTheChannelThenBothResponsesShouldBeProcessed(t *testing.T) {
 	outputFileName := "test_responses.txt"
 	f, _ := os.Create(outputFileName)
 	defer func() {
-		e := os.Remove(outputFileName)
-		if e != nil {
-
-		}
+		checkError(os.Remove(outputFileName))
 	}()
 	numberResponses := 2
 	c := make(chan *Response, numberResponses)
@@ -54,6 +51,7 @@ func TestXXXThenYYY(t *testing.T) {
 	wg.Add(1)
 	go processResponses(c, &wg, f)
 	close(c)
+	// If this is wrong it will hang
 	wg.Wait()
 }
 
@@ -65,20 +63,4 @@ func fillChannelWithResponses(q int, c chan<- *Response) {
 		time.Sleep(time.Duration(rand.Intn(10)) * time.Millisecond)
 		c <- &Response{ response: response.Result(), elapsed: time.Since(start) }
 	}
-}
-
-func TestXXXThenYY(t *testing.T) {
-	v := make([]time.Duration, 0)
-	for i := 0; i < 5; i++ {
-		r := rand.Intn(10)
-		println(r)
-		start := time.Now()
-		time.Sleep(time.Duration(r) * time.Millisecond)
-		v = append(v, time.Since(start))
-	}
-	j := int64(0)
-	for _, t := range v {
-		j += int64(t / time.Millisecond)
-	}
-	println(j / int64(len(v)))
 }
