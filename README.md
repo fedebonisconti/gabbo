@@ -1,6 +1,7 @@
 # Gabbo
 
 [![Build Status](https://travis-ci.com/fedebonisconti/gabbo.svg?token=qBVprKGBR8WcXqL8CatJ&branch=master)](https://travis-ci.com/fedebonisconti/gabbo)
+[![codecov](https://codecov.io/gh/fedebonisconti/gabbo/branch/master/graph/badge.svg?token=SJv98U94Rv)](https://codecov.io/gh/fedebonisconti/gabbo)
 
 ![Alt Text](https://media.giphy.com/media/3orieQxWzEndtoNSxi/giphy.gif)
 
