@@ -34,7 +34,8 @@ func TestRequestIsDoneThenItShouldBeInTheChannel(t *testing.T) {
 	defer close(c)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go doRequest("GET", fmt.Sprintf("%s%s", server.URL, endpoint), make([]Header, 0), c, &wg)
+
+	go doRequest("GET", fmt.Sprintf("%s%s", server.URL, endpoint), []Header{{Name:"Content-Type", Value:"application/json"}}, c, &wg)
 	wg.Wait()
 	response, ok := <-c
 	if !ok || response.statusCode() != 200 {
@@ -42,13 +43,24 @@ func TestRequestIsDoneThenItShouldBeInTheChannel(t *testing.T) {
 	}
 }
 
-func TestWhenTwoArePushedInTheChannelThenBothResponsesShouldBeProcessed(t *testing.T) {
-	outputFileName := "test_responses.txt"
-	f, _ := os.Create(outputFileName)
-	defer func() {
-		checkError(os.Remove(outputFileName))
-	}()
+func TestWhenFourArePushedInTheChannelThenResponsesShouldBeProcessed(t *testing.T) {
+	f, _ := ioutil.TempFile("", "example")
+	defer os.Remove(f.Name()) // clean up
 	numberResponses := 4
+	c := make(chan *Response, numberResponses)
+	fillChannelWithResponses(numberResponses, c)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go processResponses(c, &wg, f)
+	close(c)
+	// If this is wrong it will hang
+	wg.Wait()
+}
+
+func TestWhenNoResponsesArePushedInTheChannelThenNoneShouldBeProcessed(t *testing.T) {
+	f, _ := ioutil.TempFile("", "example")
+	defer os.Remove(f.Name()) // clean up
+	numberResponses := 0
 	c := make(chan *Response, numberResponses)
 	fillChannelWithResponses(numberResponses, c)
 	var wg sync.WaitGroup
@@ -115,11 +127,21 @@ func isInstanceOf(objectPtr, typePtr interface{}) bool {
 func fillChannelWithResponses(q int, c chan<- *Response) {
 	status := 200
 	for i := 0; i < q; i++ {
-		response := httptest.ResponseRecorder{Code: status}
-		response.WriteString(fmt.Sprintf("%d", i))
+		body := "Test"
+		response := &http.Response{
+			Status:        "200 OK",
+			StatusCode:    status,
+			Proto:         "HTTP/1.1",
+			ProtoMajor:    1,
+			ProtoMinor:    1,
+			Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+			ContentLength: int64(len(body)),
+			Request:       &http.Request{},
+			Header:        make(http.Header, 0),
+		}
 		start := time.Now()
 		time.Sleep(time.Duration(rand.Intn(10)) * time.Millisecond)
-		c <- &Response{ response: response.Result(), elapsed: time.Since(start) }
+		c <- &Response{ response: response, elapsed: time.Since(start) }
 		status += 100
 	}
 }
