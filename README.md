@@ -7,7 +7,7 @@
 
 
 ## What is Gabbo?
-Gabbo is an ApacheBench CLI tool implementation written in Go.
+Gabbo is an ApacheBench CLI tool inspired written in Go.
 
 ## Install
 
