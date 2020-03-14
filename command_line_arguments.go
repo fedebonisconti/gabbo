@@ -19,8 +19,8 @@ type Arguments struct {
 	timeBetweenBatch  int
 	sample            bool
 	sampleSize        int
-	inputFile         *bufio.Reader
-	outputFile        *bufio.Writer
+	reader            *bufio.Reader
+	writer            *bufio.Writer
 	headers           []Header
 	method            string
 }
@@ -41,13 +41,13 @@ func (argumentsParser* ArgumentsReader) Parse() *Arguments {
 		inputFile, err = os.Open(*inputFileName)
 		checkError(err)
 	}
-	arguments.inputFile = bufio.NewReader(inputFile)
+	arguments.reader = bufio.NewReader(inputFile)
 	outputFile := os.Stdout
 	if *outputFileName != "" {
 		outputFile, err = os.Create(*outputFileName)
 		checkError(err)
 	}
-	arguments.outputFile = bufio.NewWriter(outputFile)
+	arguments.writer = bufio.NewWriter(outputFile)
 
 	return arguments
 }

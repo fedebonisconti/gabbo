@@ -96,7 +96,7 @@ func TestWhenGetStatusCodeThenTeapotShouldBeReturned(t *testing.T) {
 
 func TestWhenGetIterableAndSampleIsEnabledThenARandomSliceIteratorShouldBeReturned(t *testing.T) {
 	content := "temporary\nfile's content"
-	arguments := Arguments{sample: true, sampleSize: 10, inputFile: bufio.NewReader(bytes.NewBufferString(content))}
+	arguments := Arguments{sample: true, sampleSize: 10, reader: bufio.NewReader(bytes.NewBufferString(content))}
 	i := getIterable(&arguments)
 	if !isInstanceOf(i, (*RandomSliceIterator)(nil)) {
 		t.Fail()
@@ -104,7 +104,7 @@ func TestWhenGetIterableAndSampleIsEnabledThenARandomSliceIteratorShouldBeReturn
 }
 
 func TestWhenGetIterableAndSampleIsDisabledThenAScannerIteratorShouldBeReturned(t *testing.T) {
-	arguments := Arguments{sample: false, sampleSize: 10, inputFile: bufio.NewReader(os.Stdin)}
+	arguments := Arguments{sample: false, sampleSize: 10, reader: bufio.NewReader(os.Stdin)}
 	i := getIterable(&arguments)
 	if !isInstanceOf(i, (*ScannerIterator)(nil)) {
 		t.Fail()
@@ -119,13 +119,13 @@ type ArgumentsReaderMock struct {
 func (a *ArgumentsReaderMock) Parse() *Arguments {
 	return &Arguments{
 		parallelismFactor: 2,
-		timeBetweenBatch: 0,
-		sample: false,
-		sampleSize: 10,
-		inputFile: a.input,
-		outputFile: a.output,
-		headers: make([]Header, 0),
-		method: "GET",
+		timeBetweenBatch:  0,
+		sample:            false,
+		sampleSize:        10,
+		reader:            a.input,
+		writer:            a.output,
+		headers:           make([]Header, 0),
+		method:            "GET",
 	}
 }
 

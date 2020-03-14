@@ -32,7 +32,7 @@ func (g Gabbo) run() {
 	responsesChannel := make(chan *Response)
 
 	responsesWg.Add(1)
-	go processResponses(responsesChannel, &responsesWg, arguments.outputFile)
+	go processResponses(responsesChannel, &responsesWg, arguments.writer)
 
 	sent := 0
 
@@ -147,7 +147,7 @@ func writeFile(content string, writer *bufio.Writer) {
 }
 
 func getIterable(arguments *Arguments) Iterable {
-	scanner := bufio.NewScanner(arguments.inputFile)
+	scanner := bufio.NewScanner(arguments.reader)
 	if arguments.sample {
 		v := make([]string, 0)
 		for scanner.Scan() {

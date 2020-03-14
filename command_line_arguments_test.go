@@ -28,8 +28,8 @@ func TestWhenNoHeadersThenAnEmptyArrayShouldReturned(t *testing.T) {
 
 func TestGetCLArgumentsThenDefaultArgumentsShouldBeReturned(t *testing.T) {
 	arguments := (&ArgumentsReader{}).Parse()
-	v := arguments.inputFile != nil
-	v = v && arguments.outputFile != nil
+	v := arguments.reader != nil
+	v = v && arguments.writer != nil
 	v = v && arguments.parallelismFactor == runtime.NumCPU()
 	v = v && arguments.timeBetweenBatch == 0
 	v = v && arguments.sample == false
