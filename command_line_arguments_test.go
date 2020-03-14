@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"os"
 	"runtime"
 	"testing"
 )
@@ -28,9 +27,9 @@ func TestWhenNoHeadersThenAnEmptyArrayShouldReturned(t *testing.T) {
 }
 
 func TestGetCLArgumentsThenDefaultArgumentsShouldBeReturned(t *testing.T) {
-	arguments := GetCommandLineArguments()
-	v := arguments.inputFile == os.Stdin
-	v = v && arguments.outputFile == os.Stdout
+	arguments := (&ArgumentsReader{}).Parse()
+	v := arguments.inputFile != nil
+	v = v && arguments.outputFile != nil
 	v = v && arguments.parallelismFactor == runtime.NumCPU()
 	v = v && arguments.timeBetweenBatch == 0
 	v = v && arguments.sample == false

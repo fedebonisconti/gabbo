@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
@@ -18,26 +19,35 @@ type Arguments struct {
 	timeBetweenBatch  int
 	sample            bool
 	sampleSize        int
-	inputFile         *os.File
-	outputFile        *os.File
+	inputFile         *bufio.Reader
+	outputFile        *bufio.Writer
 	headers           []Header
 	method            string
 }
 
-func GetCommandLineArguments() *Arguments {
+type ArgumentsReader struct {
+}
+
+type ArgumentsParser interface {
+	Parse() *Arguments
+}
+
+func (argumentsParser* ArgumentsReader) Parse() *Arguments {
 	inputFileName, outputFileName, arguments := parseArguments()
 
 	var err error
-	arguments.inputFile = os.Stdin
+	inputFile := os.Stdin
 	if *inputFileName != "" {
-		arguments.inputFile, err = os.Open(*inputFileName)
+		inputFile, err = os.Open(*inputFileName)
 		checkError(err)
 	}
-	arguments.outputFile = os.Stdout
+	arguments.inputFile = bufio.NewReader(inputFile)
+	outputFile := os.Stdout
 	if *outputFileName != "" {
-		arguments.outputFile, err = os.Create(*outputFileName)
+		outputFile, err = os.Create(*outputFileName)
 		checkError(err)
 	}
+	arguments.outputFile = bufio.NewWriter(outputFile)
 
 	return arguments
 }

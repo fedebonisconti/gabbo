@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -21,14 +20,11 @@ type Response struct {
 }
 
 type Gabbo struct {
+	argumentsParser ArgumentsParser
 }
 
 func (g Gabbo) run() {
-	arguments := GetCommandLineArguments()
-	defer func() {
-		checkError(arguments.inputFile.Close())
-		checkError(arguments.outputFile.Close())
-	}()
+	arguments := g.argumentsParser.Parse()
 
 	var requestsWg sync.WaitGroup
 	var responsesWg sync.WaitGroup
@@ -85,7 +81,7 @@ func doRequest(method string, url string, headers []Header, responsesChannel cha
 	}
 }
 
-func processResponses(responsesChannel <-chan *Response, responsesWg *sync.WaitGroup, outputFile *os.File) {
+func processResponses(responsesChannel <-chan *Response, responsesWg *sync.WaitGroup, outputFile *bufio.Writer) {
 	defer responsesWg.Done()
 	timesElapsed := make([]time.Duration, 0)
 	statuses := make([]int, 0)
@@ -144,9 +140,9 @@ func processResponses(responsesChannel <-chan *Response, responsesWg *sync.WaitG
 	fmt.Println("")
 }
 
-func writeFile(content string, outputFile *os.File) {
+func writeFile(content string, writer *bufio.Writer) {
 	writeMutex.Lock()
-	outputFile.WriteString(content)
+	writer.WriteString(content)
 	writeMutex.Unlock()
 }
 
