@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
 	"runtime"
 	"strings"
 )
-
 
 type Header struct {
 	Name  string
@@ -19,25 +19,35 @@ type Arguments struct {
 	timeBetweenBatch  int
 	sample            bool
 	sampleSize        int
-	inputFile         *os.File
-	outputFile        *os.File
+	reader            *bufio.Reader
+	writer            *bufio.Writer
 	headers           []Header
+	method            string
 }
 
-func GetCommandLineArguments() *Arguments {
+type ArgumentsReader struct {
+}
+
+type ArgumentsParser interface {
+	Parse() *Arguments
+}
+
+func (argumentsParser* ArgumentsReader) Parse() *Arguments {
 	inputFileName, outputFileName, arguments := parseArguments()
 
 	var err error
-	arguments.inputFile = os.Stdin
+	inputFile := os.Stdin
 	if *inputFileName != "" {
-		arguments.inputFile, err = os.Open(*inputFileName)
+		inputFile, err = os.Open(*inputFileName)
 		checkError(err)
 	}
-	arguments.outputFile = os.Stdout
+	arguments.reader = bufio.NewReader(inputFile)
+	outputFile := os.Stdout
 	if *outputFileName != "" {
-		arguments.outputFile, err = os.Create(*outputFileName)
+		outputFile, err = os.Create(*outputFileName)
 		checkError(err)
 	}
+	arguments.writer = bufio.NewWriter(outputFile)
 
 	return arguments
 }
@@ -50,13 +60,20 @@ func parseArguments() (*string, *string, *Arguments) {
 	sample := flag.Bool("sample-mode", false, "Takes random samples from input to send requests (default false)")
 	sampleSize := flag.Int("sample-size", 0, "Sample size. If zero, sample is disabled")
 	headers := flag.String("headers", "", "Comma separated headers without (example: \"Auth-Token:123,Accept:text/html,Content-Type:application/json\")")
+	method := flag.String("method", "GET", "Http method to be used in every request.")
 	flag.Parse()
+	m := strings.ToUpper(*method)
+	if m != "GET" && m != "POST" && m != "PUT" && m != "PATCH" && m != "DELETE" {
+		flag.Usage()
+		os.Exit(1)
+	}
 	arguments := Arguments{
 		parallelismFactor: *parallelismFactor,
 		timeBetweenBatch:  *timeBetweenBatch,
 		sample:            *sample && (*sampleSize != 0),
 		sampleSize:        *sampleSize,
 		headers:           parseHeaders(*headers),
+		method:            m,
 	}
 	return inputFileName, outputFileName, &arguments
 }

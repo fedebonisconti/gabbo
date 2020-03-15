@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -44,28 +44,24 @@ func TestRequestIsDoneThenItShouldBeInTheChannel(t *testing.T) {
 }
 
 func TestWhenFourArePushedInTheChannelThenResponsesShouldBeProcessed(t *testing.T) {
-	f, _ := ioutil.TempFile("", "example")
-	defer os.Remove(f.Name()) // clean up
 	numberResponses := 4
 	c := make(chan *Response, numberResponses)
 	fillChannelWithResponses(numberResponses, c)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go processResponses(c, &wg, f)
+	go processResponses(c, &wg, bufio.NewWriter(os.Stdout))
 	close(c)
 	// If this is wrong it will hang
 	wg.Wait()
 }
 
 func TestWhenNoResponsesArePushedInTheChannelThenNoneShouldBeProcessed(t *testing.T) {
-	f, _ := ioutil.TempFile("", "example")
-	defer os.Remove(f.Name()) // clean up
 	numberResponses := 0
 	c := make(chan *Response, numberResponses)
 	fillChannelWithResponses(numberResponses, c)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go processResponses(c, &wg, f)
+	go processResponses(c, &wg, bufio.NewWriter(os.Stdout))
 	close(c)
 	// If this is wrong it will hang
 	wg.Wait()
@@ -99,13 +95,8 @@ func TestWhenGetStatusCodeThenTeapotShouldBeReturned(t *testing.T) {
 }
 
 func TestWhenGetIterableAndSampleIsEnabledThenARandomSliceIteratorShouldBeReturned(t *testing.T) {
-	content := []byte("temporary\nfile's content")
-	tmpFile, _ := ioutil.TempFile("", "example")
-	defer os.Remove(tmpFile.Name()) // clean up
-	tmpFile.Write(content)
-	tmpFile.Seek(0, io.SeekStart)
-
-	arguments := Arguments{sample: true, sampleSize: 10, inputFile: tmpFile}
+	content := "temporary\nfile's content"
+	arguments := Arguments{sample: true, sampleSize: 10, reader: bufio.NewReader(bytes.NewBufferString(content))}
 	i := getIterable(&arguments)
 	if !isInstanceOf(i, (*RandomSliceIterator)(nil)) {
 		t.Fail()
@@ -113,9 +104,50 @@ func TestWhenGetIterableAndSampleIsEnabledThenARandomSliceIteratorShouldBeReturn
 }
 
 func TestWhenGetIterableAndSampleIsDisabledThenAScannerIteratorShouldBeReturned(t *testing.T) {
-	arguments := Arguments{sample: false, sampleSize: 10, inputFile: os.Stdin}
+	arguments := Arguments{sample: false, sampleSize: 10, reader: bufio.NewReader(os.Stdin)}
 	i := getIterable(&arguments)
 	if !isInstanceOf(i, (*ScannerIterator)(nil)) {
+		t.Fail()
+	}
+}
+
+type ArgumentsReaderMock struct {
+	input *bufio.Reader
+	output *bufio.Writer
+}
+
+func (a *ArgumentsReaderMock) Parse() *Arguments {
+	return &Arguments{
+		parallelismFactor: 2,
+		timeBetweenBatch:  0,
+		sample:            false,
+		sampleSize:        10,
+		reader:            a.input,
+		writer:            a.output,
+		headers:           make([]Header, 0),
+		method:            "GET",
+	}
+}
+
+func TestWhenGabboRunThenItShouldEndSuccessfully(t *testing.T) {
+	endpoint := "/some/path"
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.URL.String() != endpoint {
+			t.Fail()
+		}
+		requestCount++
+		rw.Write([]byte(`OK`))
+	}))
+	defer server.Close()
+	gabbo := Gabbo{
+		argumentsParser: &ArgumentsReaderMock{
+			input: bufio.NewReader(bytes.NewBufferString(fmt.Sprintf("%s\n", server.URL + endpoint))),
+			output: bufio.NewWriter(os.Stdout),
+		},
+	}
+	gabbo.run()
+	if requestCount == 0 {
 		t.Fail()
 	}
 }
